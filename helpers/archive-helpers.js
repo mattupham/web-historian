@@ -8,11 +8,11 @@ var _ = require('underscore');
  * if you move any files, you'll only need to change your code in one place! Feel free to
  * customize it in any way you wish.
  */
-
+//static paths for archived assets
 exports.paths = {
   siteAssets: path.join(__dirname, '../web/public'),
   archivedSites: path.join(__dirname, '../archives/sites'),
-  list: path.join(__dirname, '../archives/sites.txt')
+  list: path.join(__dirname, '../archives/sites.txt'),
 };
 
 // Used for stubbing paths for tests, do not modify
