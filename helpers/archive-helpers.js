@@ -32,6 +32,11 @@ exports.isUrlInList = function(url, callback) {
 };
 
 exports.addUrlToList = function(url, callback) {
+  fs.appendFile(exports.paths.list, `${url}\n`, (error) => {
+    if (!error && callback) {
+      callback();
+    }
+  });
 };
 
 exports.isUrlArchived = function(url, callback) {

@@ -6,12 +6,13 @@ var fs = require('fs');
 
 exports.handleRequest = function(req, res) {
   
+  console.log(`Serving ${req.method} request at enpoint: ${req.url}`);
   exports.endpointAction = {
-    'GET': http_helpers.handleGet//,
-    // 'POST': http_helpers.handlePost,
+    'GET': http_helpers.handleGet,
+    'POST': http_helpers.extractRequestData,
     // 'OPTIONS'http_helpers.handleOptions: 
   }
-  console.log(req.method)
+  
   exports.endpointAction[req.method](req, res);
   
   
