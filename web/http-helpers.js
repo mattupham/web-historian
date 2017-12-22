@@ -87,20 +87,17 @@ exports.handlePost = function(req, res, url) {
   //checking for file existence
 
   archive.isUrlArchived(url, function(exists) {
-    //if file is not found, return loading page, add url to list.txt
     if (exists) {
+    //if file is found, return page
       headers['Content-Type'] = 'text/html';
+      headers['Location'] = archive.paths.archivedSites + '/' + url;
       res.writeHead(302, headers);
+      res.end();
+    } else {
       //adds url to list .txt
       archive.addUrlToList(url);
-      //for now, return loading page
-      fs.readFile(exports.endpointsData['/loading.html'].asset, function(errors, data) {
-        res.end(data);
-      });  
-    } else {
-      //write that the file was found
+      headers['Location'] = '/loading.html';
       res.writeHead(302, headers);
-      //how to send a redirect request
       res.end();
     }
   });
