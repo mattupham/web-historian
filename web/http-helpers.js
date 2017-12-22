@@ -12,10 +12,10 @@ exports.headers = {
 
 //static files mapped to paths
 exports.staticFiles = {
-  index_html: path.join(__dirname, './public/index.html'),
-  loading_html: path.join(__dirname, './public/loading.html'),
-  index_css: path.join(__dirname, './public/styles.css'),
-  index_favicon: path.join(__dirname, './public/favicon.ico')
+  'index_html': path.join(__dirname, './public/index.html'),
+  'loading_html': path.join(__dirname, './public/loading.html'),
+  'index_css': path.join(__dirname, './public/styles.css'),
+  'index_favicon': path.join(__dirname, './public/favicon.ico')
 };
 
 //dynamic files mapped to paths
@@ -37,12 +37,12 @@ exports.endpointsData = {
   '/styles.css': {
     asset: exports.staticFiles.index_css,
     'Content-Type': 'text/css'
-   },
-   '/favicon.ico': {
+  },
+  '/favicon.ico': {
     asset: exports.staticFiles.index_favicon,
     'Content-Type': 'image/x-icon'
-   },
-   '/loading.html': {
+  },
+  '/loading.html': {
     asset: exports.staticFiles.loading_html,
     'Content-Type': 'text/html'
   }
@@ -50,61 +50,78 @@ exports.endpointsData = {
 
 exports.handleGet = function(req, res) {
   let headers = exports.headers;
-  //if not found in static endpoints
-  console.log('req.url', req.url);
-  if (exports.endpointsData.hasOwnProperty(req.url))
-    // if not found in dynamoc endpoints
-      // return 404
-    //else handle dynamics
-    
-  //write the headers to response
-  let endpointInfo = exports.endpointsData[req.url];
   
-  headers['Content-Type'] = endpointInfo['Content-Type'];
-  res.writeHead(200, headers);
-  fs.readFile(endpointInfo.asset, function(errors, data){
-    res.end(data);
-  });  
+  console.log('req.url', req.url);
+  //if found in static endpoints
+  if (exports.endpointsData.hasOwnProperty(req.url)) {
+    let endpointInfo = exports.endpointsData[req.url];
+    headers['Content-Type'] = endpointInfo['Content-Type'];
+    res.writeHead(200, headers);
+    //reads file, sends back data
+    fs.readFile(endpointInfo.asset, function(error, data) {
+      res.end(data);
+    }); 
+  //if found in dynamic endpoints
+  } else {
+    archive.isUrlArchived(req.url, function(exists) {
+      if (exists) {
+        //return 200
+        headers['Content-Type'] = 'text/html';
+        res.writeHead(200, headers);
+        //reads file, sends back data
+        fs.readFile(archive.paths.archivedSites + '/' + req.url, function(error, data) {
+          res.end(data);
+        }); 
+      } else {
+        //return 404
+        res.writeHead(404, headers);
+        res.end();
+      }
+    });
+  }
 };
 
 exports.handlePost = function(req, res, url) {
   let headers = exports.headers;
-  
+  console.log('in handle post', url);
   //checking for file existence
-  fs.access(archive.paths.archivedSites + '/' + url, function (err) {
-    //if error, write 404
-    if (err) {
-      res.writeHead(404, headers);
-      res.end();
-    //else, write 201, read file, add url to list
-    } else {
+
+  archive.isUrlArchived(url, function(exists) {
+    //if file is not found, return loading page, add url to list.txt
+    if (exists) {
       headers['Content-Type'] = 'text/html';
-      res.writeHead(201, headers);
-      //for now, return loading page
-      fs.readFile(exports.endpointsData['/loading.html'].asset, function(errors, data){
-        res.end(data);
-      });  
+      res.writeHead(302, headers);
       //adds url to list .txt
       archive.addUrlToList(url);
+      //for now, return loading page
+      fs.readFile(exports.endpointsData['/loading.html'].asset, function(errors, data) {
+        res.end(data);
+      });  
+    } else {
+      //write that the file was found
+      res.writeHead(302, headers);
+      //how to send a redirect request
+      res.end();
     }
   });
-  
-  
-}
+};
 
 exports.extractRequestData = function(req, res) {
   //body is url
-  let body = '';
+  let bodyUrl = '';
   req.on('data', (chunk) => {
-    console.log('chunk', chunk);
-    body += chunk.toString();
+    //console.log('chunk', chunk);
+    bodyUrl += chunk.toString();
+    console.log(bodyUrl);
   });
   req.on('end', () => {
+    
     //turns body into pure url
-    body = body.slice(body.indexOf('=') + 1);
-    exports.handlePost(req, res, body);
+    bodyUrl = bodyUrl.slice(bodyUrl.indexOf('=') + 1);
+    console.log('before handlepost',bodyUrl);
+    exports.handlePost(req, res, bodyUrl);
   });
-}
+};
 
 exports.serveAssets = function(res, asset, callback) {
 };
